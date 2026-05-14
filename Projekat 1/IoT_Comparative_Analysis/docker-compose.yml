@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+ 
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: iotuser
+      POSTGRES_PASSWORD: iotpassword
+      POSTGRES_DB: iotdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./Database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iotuser -d iotdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  
+  rest-api:
+    build:
+      context: ./RestApi/RestApi
+      dockerfile: Dockerfile
+    container_name: rest-api
+    ports:
+      - "5001:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres-db;Database=iotdb;Username=iotuser;Password=iotpassword
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+
+  grpc-api:
+    build:
+      context: ./GrpcApi/GrpcApi
+      dockerfile: Dockerfile
+    container_name: grpc-api
+    ports:
+      - "5002:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres-db;Database=iotdb;Username=iotuser;Password=iotpassword
+      - Kestrel__EndpointDefaults__Protocols=Http2 
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+  
+  graphql-api:
+    build:
+      context: ./GraphqlApi
+      dockerfile: Dockerfile
+    container_name: graphql-api
+    ports:
+      - "5003:8000"
+    environment:
+      - DATABASE_URL=postgresql://iotuser:iotpassword@postgres-db:5432/iotdb
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+networks:
+  default:
+    name: iot-network

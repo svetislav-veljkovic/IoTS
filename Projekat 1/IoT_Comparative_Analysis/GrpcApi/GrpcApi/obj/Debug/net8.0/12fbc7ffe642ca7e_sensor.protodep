@@ -1,0 +1,3 @@
+obj\Debug\net8.0\Protos/Sensor.cs \
+obj\Debug\net8.0\Protos/SensorGrpc.cs: C:/Users/sveti/.nuget/packages/grpc.tools/2.80.0/build/native/include/google/protobuf/timestamp.proto\
+ Protos/sensor.proto
