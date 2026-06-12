@@ -1,0 +1,115 @@
+
+
+x-common-env: &common-env
+  BROKER_TYPE: ${BROKER_TYPE:-mqtt}
+  POSTGRES_CONNECTION_STRING: ${POSTGRES_CONNECTION_STRING}
+  MQTT_HOST: ${MQTT_HOST:-mosquitto}
+  MQTT_PORT: ${MQTT_PORT:-1883}
+  MQTT_TOPIC: ${MQTT_TOPIC:-iot/sensors}
+  MQTT_QOS: ${MQTT_QOS:-1}
+  KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+  KAFKA_TOPIC: ${KAFKA_TOPIC:-iot-sensors}
+  KAFKA_ACKS: ${KAFKA_ACKS:-1}
+  KAFKA_CONSUMER_GROUP: ${KAFKA_CONSUMER_GROUP:-iot-consumers}
+
+networks:
+  iot-network:
+    driver: bridge
+    name: iot-network
+
+volumes:
+  postgres-data:
+  mosquitto-data:
+  mosquitto-log:
+  kafka-data:
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: iot-postgres
+    restart: unless-stopped
+    networks:
+      - iot-network
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-iot_data}
+      POSTGRES_USER: ${POSTGRES_USER:-iotuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-iotpassword}
+      POSTGRES_HOST_AUTH_METHOD: md5
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-iotuser} -d $${POSTGRES_DB:-iot_data}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0.18
+    container_name: iot-mosquitto
+    restart: unless-stopped
+    networks:
+      - iot-network
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-log:/mosquitto/log
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -h localhost -p 1883 -t '$$SYS/broker/uptime' -C 1 -W 3 2>/dev/null || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: iot-kafka
+    restart: unless-stopped
+    networks:
+      - iot-network
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qg"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: iot-kafka-ui
+    restart: unless-stopped
+    networks:
+      - iot-network
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local-kraft
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    profiles:
+      - tools
+
