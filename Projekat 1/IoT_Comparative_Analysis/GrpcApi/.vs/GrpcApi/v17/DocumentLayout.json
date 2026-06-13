@@ -3,6 +3,18 @@
   "WorkspaceRootPath": "C:\\Users\\sveti\\Desktop\\IoTS\\Projekat 1\\IoT_Comparative_Analysis\\GrpcApi\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{C3E88B30-5433-727F-AA83-4D7A8CF37F7E}|GrpcApi\\GrpcApi.csproj|c:\\users\\sveti\\desktop\\iots\\projekat 1\\iot_comparative_analysis\\grpcapi\\grpcapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C3E88B30-5433-727F-AA83-4D7A8CF37F7E}|GrpcApi\\GrpcApi.csproj|solutionrelative:grpcapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3E88B30-5433-727F-AA83-4D7A8CF37F7E}|GrpcApi\\GrpcApi.csproj|c:\\users\\sveti\\desktop\\iots\\projekat 1\\iot_comparative_analysis\\grpcapi\\grpcapi\\dockerfile||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{C3E88B30-5433-727F-AA83-4D7A8CF37F7E}|GrpcApi\\GrpcApi.csproj|solutionrelative:grpcapi\\dockerfile||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3E88B30-5433-727F-AA83-4D7A8CF37F7E}|GrpcApi\\GrpcApi.csproj|c:\\users\\sveti\\desktop\\iots\\projekat 1\\iot_comparative_analysis\\grpcapi\\grpcapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{C3E88B30-5433-727F-AA83-4D7A8CF37F7E}|GrpcApi\\GrpcApi.csproj|solutionrelative:grpcapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{C3E88B30-5433-727F-AA83-4D7A8CF37F7E}|GrpcApi\\GrpcApi.csproj|c:\\users\\sveti\\desktop\\iots\\projekat 1\\iot_comparative_analysis\\grpcapi\\grpcapi\\protos\\sensor.proto||{3B902123-F8A7-4915-9F01-361F908088D0}",
       "RelativeMoniker": "D:0:0:{C3E88B30-5433-727F-AA83-4D7A8CF37F7E}|GrpcApi\\GrpcApi.csproj|solutionrelative:grpcapi\\protos\\sensor.proto||{3B902123-F8A7-4915-9F01-361F908088D0}"
     }
@@ -31,12 +43,51 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\sveti\\Desktop\\IoTS\\Projekat 1\\IoT_Comparative_Analysis\\GrpcApi\\GrpcApi\\Program.cs",
+              "RelativeDocumentMoniker": "GrpcApi\\Program.cs",
+              "ToolTip": "C:\\Users\\sveti\\Desktop\\IoTS\\Projekat 1\\IoT_Comparative_Analysis\\GrpcApi\\GrpcApi\\Program.cs",
+              "RelativeToolTip": "GrpcApi\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-13T20:20:48.677Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Dockerfile",
+              "DocumentMoniker": "C:\\Users\\sveti\\Desktop\\IoTS\\Projekat 1\\IoT_Comparative_Analysis\\GrpcApi\\GrpcApi\\Dockerfile",
+              "RelativeDocumentMoniker": "GrpcApi\\Dockerfile",
+              "ToolTip": "C:\\Users\\sveti\\Desktop\\IoTS\\Projekat 1\\IoT_Comparative_Analysis\\GrpcApi\\GrpcApi\\Dockerfile",
+              "RelativeToolTip": "GrpcApi\\Dockerfile",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAkAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-06-13T20:20:38.88Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\sveti\\Desktop\\IoTS\\Projekat 1\\IoT_Comparative_Analysis\\GrpcApi\\GrpcApi\\appsettings.json",
+              "RelativeDocumentMoniker": "GrpcApi\\appsettings.json",
+              "ToolTip": "C:\\Users\\sveti\\Desktop\\IoTS\\Projekat 1\\IoT_Comparative_Analysis\\GrpcApi\\GrpcApi\\appsettings.json",
+              "RelativeToolTip": "GrpcApi\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-06-13T20:20:35.299Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
               "Title": "sensor.proto",
               "DocumentMoniker": "C:\\Users\\sveti\\Desktop\\IoTS\\Projekat 1\\IoT_Comparative_Analysis\\GrpcApi\\GrpcApi\\Protos\\sensor.proto",
               "RelativeDocumentMoniker": "GrpcApi\\Protos\\sensor.proto",
               "ToolTip": "C:\\Users\\sveti\\Desktop\\IoTS\\Projekat 1\\IoT_Comparative_Analysis\\GrpcApi\\GrpcApi\\Protos\\sensor.proto",
               "RelativeToolTip": "GrpcApi\\Protos\\sensor.proto",
-              "ViewState": "AgIAAAIAAAAAAAAAAAAiwCcAAAABAAAAAAAAAA==",
+              "ViewState": "AgIAAAIAAAAAAAAAAAAgwCcAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003853|",
               "WhenOpened": "2026-05-16T06:45:29.299Z",
               "EditorCaption": ""

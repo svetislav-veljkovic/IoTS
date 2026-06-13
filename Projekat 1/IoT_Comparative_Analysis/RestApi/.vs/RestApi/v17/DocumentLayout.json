@@ -1,7 +1,16 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\sveti\\Desktop\\IoT_Comparative_Analysis\\RestApi\\",
-  "Documents": [],
+  "WorkspaceRootPath": "C:\\Users\\sveti\\Desktop\\IoTS\\Projekat 1\\IoT_Comparative_Analysis\\RestApi\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{B234FC46-C62A-40AF-BFF5-7CCE18E799BD}|RestApi\\RestApi.csproj|c:\\users\\sveti\\desktop\\iots\\projekat 1\\iot_comparative_analysis\\restapi\\restapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B234FC46-C62A-40AF-BFF5-7CCE18E799BD}|RestApi\\RestApi.csproj|solutionrelative:restapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B234FC46-C62A-40AF-BFF5-7CCE18E799BD}|RestApi\\RestApi.csproj|c:\\users\\sveti\\desktop\\iots\\projekat 1\\iot_comparative_analysis\\restapi\\restapi\\dockerfile||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{B234FC46-C62A-40AF-BFF5-7CCE18E799BD}|RestApi\\RestApi.csproj|solutionrelative:restapi\\dockerfile||{8B382828-6202-11D1-8870-0000F87579D2}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,7 +18,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Bookmark",
@@ -22,6 +31,32 @@
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\sveti\\Desktop\\IoTS\\Projekat 1\\IoT_Comparative_Analysis\\RestApi\\RestApi\\Program.cs",
+              "RelativeDocumentMoniker": "RestApi\\Program.cs",
+              "ToolTip": "C:\\Users\\sveti\\Desktop\\IoTS\\Projekat 1\\IoT_Comparative_Analysis\\RestApi\\RestApi\\Program.cs",
+              "RelativeToolTip": "RestApi\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-13T20:22:12.009Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Dockerfile",
+              "DocumentMoniker": "C:\\Users\\sveti\\Desktop\\IoTS\\Projekat 1\\IoT_Comparative_Analysis\\RestApi\\RestApi\\Dockerfile",
+              "RelativeDocumentMoniker": "RestApi\\Dockerfile",
+              "ToolTip": "C:\\Users\\sveti\\Desktop\\IoTS\\Projekat 1\\IoT_Comparative_Analysis\\RestApi\\RestApi\\Dockerfile",
+              "RelativeToolTip": "RestApi\\Dockerfile",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAkAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-06-13T20:22:01.032Z",
+              "EditorCaption": ""
             }
           ]
         }

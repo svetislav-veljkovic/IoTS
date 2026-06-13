@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "ZD+h/Qyez9I=",
+  "dgSpecHash": "FIp0buWHSMw=",
   "success": true,
-  "projectFilePath": "C:\\Users\\sveti\\Desktop\\IoT_Comparative_Analysis\\RestApi\\RestApi\\RestApi.csproj",
+  "projectFilePath": "C:\\Users\\sveti\\Desktop\\IoTS\\Projekat 1\\IoT_Comparative_Analysis\\RestApi\\RestApi\\RestApi.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\sveti\\.nuget\\packages\\dapper\\2.1.72\\dapper.2.1.72.nupkg.sha512",
     "C:\\Users\\sveti\\.nuget\\packages\\microsoft.extensions.apidescription.server\\6.0.5\\microsoft.extensions.apidescription.server.6.0.5.nupkg.sha512",

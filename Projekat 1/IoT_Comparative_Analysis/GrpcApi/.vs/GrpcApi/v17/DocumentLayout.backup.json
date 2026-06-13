@@ -1,7 +1,12 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\sveti\\Desktop\\IoT_Comparative_Analysis\\GrpcApi\\",
-  "Documents": [],
+  "WorkspaceRootPath": "C:\\Users\\sveti\\Desktop\\IoTS\\Projekat 1\\IoT_Comparative_Analysis\\GrpcApi\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{C3E88B30-5433-727F-AA83-4D7A8CF37F7E}|GrpcApi\\GrpcApi.csproj|c:\\users\\sveti\\desktop\\iots\\projekat 1\\iot_comparative_analysis\\grpcapi\\grpcapi\\protos\\sensor.proto||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{C3E88B30-5433-727F-AA83-4D7A8CF37F7E}|GrpcApi\\GrpcApi.csproj|solutionrelative:grpcapi\\protos\\sensor.proto||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,7 +14,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Bookmark",
@@ -22,6 +27,19 @@
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "sensor.proto",
+              "DocumentMoniker": "C:\\Users\\sveti\\Desktop\\IoTS\\Projekat 1\\IoT_Comparative_Analysis\\GrpcApi\\GrpcApi\\Protos\\sensor.proto",
+              "RelativeDocumentMoniker": "GrpcApi\\Protos\\sensor.proto",
+              "ToolTip": "C:\\Users\\sveti\\Desktop\\IoTS\\Projekat 1\\IoT_Comparative_Analysis\\GrpcApi\\GrpcApi\\Protos\\sensor.proto",
+              "RelativeToolTip": "GrpcApi\\Protos\\sensor.proto",
+              "ViewState": "AgIAAAIAAAAAAAAAAAAiwCcAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003853|",
+              "WhenOpened": "2026-05-16T06:45:29.299Z",
+              "EditorCaption": ""
             }
           ]
         }
