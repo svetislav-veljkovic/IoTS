@@ -1,0 +1,11 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+__pycache__/
+*.pyc
+.env.local
+benchmark/results/*.csv
+benchmark/results/*.log
+.DS_Store

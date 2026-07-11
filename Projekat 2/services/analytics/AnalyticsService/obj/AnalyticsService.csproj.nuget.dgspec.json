@@ -52,7 +52,7 @@
           "dependencies": {
             "Confluent.Kafka": {
               "target": "Package",
-              "version": "[2.14.2, )"
+              "version": "[2.4.0, )"
             },
             "MQTTnet": {
               "target": "Package",
@@ -60,11 +60,11 @@
             },
             "Microsoft.Extensions.Hosting": {
               "target": "Package",
-              "version": "[8.0.1, )"
+              "version": "[8.0.0, )"
             },
             "Npgsql": {
               "target": "Package",
-              "version": "[10.0.3, )"
+              "version": "[8.0.3, )"
             }
           },
           "imports": [

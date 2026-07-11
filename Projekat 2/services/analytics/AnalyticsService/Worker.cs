@@ -6,47 +6,27 @@ namespace AnalyticsService;
 
 public class Worker : BackgroundService
 {
-    private readonly ILogger<Worker> _logger;
-    private readonly IConfiguration _config;
-    private readonly TumblingWindowProcessor _processor;
-    private readonly MqttAnalyticsConsumer _mqttConsumer;
-    private readonly KafkaAnalyticsConsumer _kafkaConsumer;
+    private readonly ILogger<Worker> _log;
+    private readonly IConfiguration _cfg;
+    private readonly TumblingWindowProcessor _proc;
+    private readonly MqttAnalyticsConsumer _mqtt;
+    private readonly KafkaAnalyticsConsumer _kafka;
 
-    public Worker(
-        ILogger<Worker> logger,
-        IConfiguration config,
-        TumblingWindowProcessor processor,
-        MqttAnalyticsConsumer mqttConsumer,
-        KafkaAnalyticsConsumer kafkaConsumer)
+    public Worker(ILogger<Worker> log, IConfiguration cfg,
+                  TumblingWindowProcessor proc, MqttAnalyticsConsumer mqtt, KafkaAnalyticsConsumer kafka)
+    { _log = log; _cfg = cfg; _proc = proc; _mqtt = mqtt; _kafka = kafka; }
+
+    protected override async Task ExecuteAsync(CancellationToken stop)
     {
-        _logger = logger;
-        _config = config;
-        _processor = processor;
-        _mqttConsumer = mqttConsumer;
-        _kafkaConsumer = kafkaConsumer;
-    }
-
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        string brokerType = (_config["BROKER_TYPE"] ?? "mqtt").ToLower();
-        _logger.LogInformation("Pokretanje Analytics servisa. Izabrani broker: {Broker}", brokerType);
-
-
-        _processor.Start();
-
-        if (brokerType == "mqtt")
+        var b = (_cfg["BROKER_TYPE"] ?? "mqtt").Trim().ToLowerInvariant();
+        _log.LogInformation("Pokretanje Analytics, broker={B}", b);
+        _proc.Start();
+        try
         {
-            await _mqttConsumer.StartAsync(stoppingToken);
-      
-            await Task.Delay(Timeout.Infinite, stoppingToken);
+            if (b == "mqtt") { await _mqtt.StartAsync(stop); await Task.Delay(Timeout.Infinite, stop); }
+            else if (b == "kafka") await _kafka.StartAsync(stop);
+            else _log.LogCritical("Nepoznat BROKER_TYPE={B}", b);
         }
-        else if (brokerType == "kafka")
-        {
-            await _kafkaConsumer.StartConsumeAsync(stoppingToken);
-        }
-        else
-        {
-            _logger.LogCritical("Nepoznat BROKER_TYPE: {Broker}. Servis se gasi.", brokerType);
-        }
+        catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
     }
 }

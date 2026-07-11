@@ -1,20 +1,9 @@
-FROM python:3.12-slim
-
+FROM python:3.11-slim
 WORKDIR /app
-
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends libssl3 libsasl2-2 libzstd1 netcat-openbsd \
+ && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
-
 COPY . .
-
-
-RUN mkdir -p /app/data
-
-CMD ["python", "-u", "main.py"]
+CMD ["python", "main.py"]

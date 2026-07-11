@@ -1,13 +1,9 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using AnalyticsService;
 
-var builder = Host.CreateApplicationBuilder(args);
-
-builder.Services.AddSingleton<TumblingWindowProcessor>();
-builder.Services.AddSingleton<MqttAnalyticsConsumer>();
-builder.Services.AddSingleton<KafkaAnalyticsConsumer>();
-builder.Services.AddHostedService<Worker>();
-
-var host = builder.Build();
-await host.RunAsync();
+var b = Host.CreateApplicationBuilder(args);
+b.Configuration.AddEnvironmentVariables().AddJsonFile("appsettings.json", optional: true, reloadOnChange: false);
+b.Services.AddSingleton<TumblingWindowProcessor>();
+b.Services.AddSingleton<MqttAnalyticsConsumer>();
+b.Services.AddSingleton<KafkaAnalyticsConsumer>();
+b.Services.AddHostedService<Worker>();
+await b.Build().RunAsync();

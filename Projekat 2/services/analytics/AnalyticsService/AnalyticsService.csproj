@@ -1,16 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>dotnet-AnalyticsService-5168b041-2bc3-4055-813d-2c16efc30a41</UserSecretsId>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <RootNamespace>AnalyticsService</RootNamespace>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="Confluent.Kafka" Version="2.14.2" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
     <PackageReference Include="MQTTnet" Version="4.3.3.952" />
-    <PackageReference Include="Npgsql" Version="10.0.3" />
+    <PackageReference Include="Confluent.Kafka" Version="2.4.0" />
+    <PackageReference Include="Npgsql" Version="8.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
   </ItemGroup>
 </Project>

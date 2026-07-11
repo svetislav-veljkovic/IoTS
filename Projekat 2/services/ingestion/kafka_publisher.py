@@ -1,211 +1,102 @@
-
-
-import asyncio
-import json
-import logging
-import os
-import time
-from concurrent.futures import ThreadPoolExecutor
-from typing import List
-
-from confluent_kafka import Producer, KafkaError
+import asyncio, logging, os, random, time
+from confluent_kafka import Producer, KafkaException
 
 logger = logging.getLogger(__name__)
 
 
-def delivery_report(err, msg, stats: dict):
-  
-    if err is not None:
-        stats["failed"] += 1
-        logger.debug(f"[Kafka] Delivery failure: {err}")
-    else:
-        stats["success"] += 1
-        if msg.latency() is not None:
-            stats["latency_sum"] += msg.latency()
-            stats["latency_count"] += 1
-
-
 class KafkaPublisher:
-
-
     def __init__(self):
-        self.bootstrap_servers = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
+        self.bootstrap = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "iot-kafka:9092")
         self.topic = os.getenv("KAFKA_TOPIC", "iot-sensors")
-        self.acks = os.getenv("KAFKA_ACKS", "1")
-        
-        # Statistike za merenje
-        self.stats = {
-            "success": 0,
-            "failed": 0,
-            "latency_sum": 0.0,
-            "latency_count": 0,
-        }
-        self.start_time = None
+        self.acks_raw = os.getenv("KAFKA_ACKS", "1")
+        self.cr = float(os.getenv("CRITICAL_RATIO", "0.05"))
+        self.st = {"ok":0, "fail":0, "lat_s":0.0, "lat_n":0, "crit":0, "prod":0}
+        self.t0 = None
 
-    def _create_producer(self) -> Producer:
-       
-        
+    def _mk(self):
+        a = self.acks_raw if self.acks_raw == "all" else int(self.acks_raw)
+        return Producer({
+            "bootstrap.servers": self.bootstrap, "acks": a,
+            "linger.ms": 5, "batch.size": 65536, "compression.type": "lz4",
+            "socket.keepalive.enable": True, "message.send.max.retries": 5,
+            "retry.backoff.ms": 200, "queue.buffering.max.messages": 1_000_000,
+        })
 
-        config = {
-            "bootstrap.servers": self.bootstrap_servers,
-            "acks": self.acks,
-            
-           
-            "linger.ms": 5,          
-            "batch.size": 65536,      
-            "compression.type": "lz4",
-            
-            "queue.buffering.max.messages": 100000,
-            "queue.buffering.max.kbytes": 65536,
-            
-            "retries": 3,
-            "retry.backoff.ms": 100,
-            
+    def _on_deliv(self, err, _m):
+        if err is None: self.st["ok"] += 1
+        else: self.st["fail"] += 1
 
-            "statistics.interval.ms": 5000,
-        }
-        
-     
-        if self.acks == "all":
-            config["delivery.timeout.ms"] = 30000
-            config["request.timeout.ms"] = 5000
-        
-        return Producer(config)
-
-    async def run_simulation(self, device_ids: List[str],
-                              generator,
-                              messages_per_second: float,
-                              duration_seconds: int):
-      
-        self.start_time = time.time()
-        delay = 1.0 / messages_per_second if messages_per_second > 0 else 0.01
-        
-        logger.info(
-            f"[Kafka] Startovanje simulacije:\n"
-            f"  Uređaja:          {len(device_ids)}\n"
-            f"  acks:             {self.acks}\n"
-            f"  Target msg/s:     {messages_per_second * len(device_ids):.0f}\n"
-            f"  Trajanje:         {duration_seconds}s\n"
-            f"  Broker:           {self.bootstrap_servers}\n"
-            f"  Topic:            {self.topic}"
-        )
-        
-        producer = self._create_producer()
-        end_time = time.time() + duration_seconds
-        total_produced = 0
-        
+    async def _dev_loop(self, p, did, gen, rps, stop):
+        d = 1.0 / rps if rps > 0 else 0.001
         try:
-            while time.time() < end_time:
-                batch_start = time.time()
-                
-                for device_id in device_ids:
-                    payload = generator.generate_message(device_id)
-                    
-                  
-                    producer.produce(
-                        topic=self.topic,
-                        key=device_id.encode("utf-8"),
-                        value=payload.encode("utf-8"),
-                     
-                        headers={"source": b"ingestion-service"},
-                        on_delivery=lambda err, msg: delivery_report(err, msg, self.stats)
-                    )
-                    total_produced += 1
-                
-               
-                producer.poll(0)
-                
-              
-                if total_produced % 1000 == 0 and total_produced > 0:
-                    elapsed = time.time() - self.start_time
-                    tps = total_produced / elapsed
-                    avg_lat = (
-                        self.stats["latency_sum"] / self.stats["latency_count"] * 1000
-                        if self.stats["latency_count"] > 0 else 0
-                    )
-                    logger.info(
-                        f"[Kafka] Produkovano: {total_produced:,} | "
-                        f"Potvrdjeno: {self.stats['success']:,} | "
-                        f"Greske: {self.stats['failed']} | "
-                        f"Throughput: {tps:.1f} msg/s | "
-                        f"Avg latencija: {avg_lat:.2f}ms"
-                    )
-                
-                
-                batch_elapsed = time.time() - batch_start
-                sleep_time = max(0, delay - batch_elapsed)
-                if sleep_time > 0:
-                    await asyncio.sleep(sleep_time)
+            while not stop.is_set():
+                t0 = time.perf_counter()
+                crit = self.cr > 0 and random.random() < self.cr
+                pay = gen.generate_message(did, crit).encode("utf-8")
+                try:
+                    p.produce(self.topic, key=did.encode(), value=pay,
+                              headers={"source": b"ingestion"},
+                              on_delivery=self._on_deliv)
+                    p.poll(0); self.st["prod"] += 1
+                    if crit: self.st["crit"] += 1
+                except (KafkaException, BufferError):
+                    self.st["fail"] += 1; p.poll(5); await asyncio.sleep(0.01); continue
+                await asyncio.sleep(max(0, d - (time.perf_counter()-t0)))
+        except asyncio.CancelledError: return
 
-        except asyncio.CancelledError:
-            logger.info("[Kafka] Simulacija prekinuta.")
+    async def run_simulation(self, devs, gen, rate, dur):
+        self.t0 = time.time(); self.st = {"ok":0,"fail":0,"lat_s":0.0,"lat_n":0,"crit":0,"prod":0}
+        p = self._mk()
+        tot = len(devs)*rate
+        logger.info("[Kafka] PARALELNO: devices=%d acks=%s total=%.0f msg/s dur=%ds",
+                    len(devs), self.acks_raw, tot, dur)
+        try:
+            stop = asyncio.Event()
+            tasks = [asyncio.create_task(self._dev_loop(p, d, gen, rate, stop)) for d in devs]
+            rep = asyncio.create_task(self._report(stop))
+            await asyncio.sleep(dur); stop.set()
+            for t in tasks: t.cancel(); rep.cancel()
+            await asyncio.gather(*tasks, rep, return_exceptions=True)
         except Exception as e:
-            logger.error(f"[Kafka] Fatalna greska: {e}", exc_info=True)
+            logger.error("[Kafka] Fatal: %s", e, exc_info=True)
         finally:
-           
-            logger.info("[Kafka] Flushing preostalih poruka...")
-            producer.flush(timeout=30)
-            
-            elapsed = time.time() - self.start_time if self.start_time else 0
-            avg_lat_ms = (
-                self.stats["latency_sum"] / self.stats["latency_count"] * 1000
-                if self.stats["latency_count"] > 0 else 0
-            )
-            
-            logger.info(
-                f"\n[Kafka]  REZULTATI SIMULACIJE\n"
-                f"  Ukupno produkovano: {total_produced:,}\n"
-                f"  Potvrdjeno (acks):   {self.stats['success']:,}\n"
-                f"  Greske:             {self.stats['failed']}\n"
-                f"  Trajanje:           {elapsed:.2f}s\n"
-                f"  Avg throughput:     {total_produced/elapsed:.1f} msg/s\n"
-                f"  Avg latencija:      {avg_lat_ms:.2f}ms\n"
-            )
+            p.flush(30); self._print_stats()
 
-    async def run_burst_simulation(self, device_ids: List[str],
-                                    generator,
-                                    initial_rate: float,
-                                    burst_rate: float,
-                                    burst_duration: int):
-       
-        producer = self._create_producer()
-        
+    async def run_burst(self, devs, gen, init, burst, burst_dur):
+        self.t0 = time.time(); self.st = {"ok":0,"fail":0,"lat_s":0.0,"lat_n":0,"crit":0,"prod":0}
+        p = self._mk()
+        logger.info("[Kafka] BURST init=%.0f burst=%.0f dur=%ds",
+                    init*len(devs), burst*len(devs), burst_dur)
+        try:
+            await self._phase(p, devs, gen, init, 30)
+            await self._phase(p, devs, gen, burst, burst_dur)
+            await self._phase(p, devs, gen, init, 30)
+        finally:
+            p.flush(30); self._print_stats()
+
+    async def _phase(self, p, devs, gen, rate, dur):
+        stop = asyncio.Event()
+        tasks = [asyncio.create_task(self._dev_loop(p, d, gen, rate, stop)) for d in devs]
+        await asyncio.sleep(dur); stop.set()
+        for t in tasks: t.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+    async def _report(self, stop):
+        lp, lt = 0, time.time()
+        while not stop.is_set():
+            await asyncio.sleep(5)
+            pr, ok, fl = self.st["prod"], self.st["ok"], self.st["fail"]
+            n = time.time(); el = n-(self.t0 or n)
+            w = (pr-lp)/max(n-lt, 1e-3); lp,lt=pr,n
+            logger.info(f"[Kafka] Prod={pr:,} ACK={ok:,} Fail={int(fl)} Avg={pr/el:.1f} Win5s={w:.1f}")
+
+    def _print_stats(self):
+        if not self.t0: return
+        el = time.time()-self.t0; s = self.st
+        tot = s["ok"]+s["fail"]; loss = s["fail"]/tot*100 if tot else 0
         logger.info(
-            f"[Kafka] BURST SIMULACIJA:\n"
-            f"  Normalna brzina:  {initial_rate * len(device_ids):.0f} msg/s\n"
-            f"  Burst brzina:     {burst_rate * len(device_ids):.0f} msg/s"
-        )
-        
-       
-        logger.info("[Kafka] Faza 1: Normalna brzina (30s)...")
-        await self._kafka_send_at_rate(producer, device_ids, generator, initial_rate, 30)
-        
-      
-        logger.info(f"[Kafka]  Povecanje na {burst_rate * len(device_ids):.0f} msg/s")
-        await self._kafka_send_at_rate(producer, device_ids, generator, burst_rate, burst_duration)
-        
-     
-        logger.info("[Kafka] Faza 3: Recovery...")
-        await self._kafka_send_at_rate(producer, device_ids, generator, initial_rate, 30)
-        
-        producer.flush(30)
-        logger.info("[Kafka] Burst simulacija zavrsena.")
-
-    async def _kafka_send_at_rate(self, producer, device_ids, generator, rate, duration):
-        
-        delay = 1.0 / rate if rate > 0 else 0.001
-        end_time = time.time() + duration
-        
-        while time.time() < end_time:
-            start = time.time()
-            for device_id in device_ids:
-                payload = generator.generate_message(device_id)
-                producer.produce(
-                    topic=self.topic,
-                    key=device_id.encode(),
-                    value=payload.encode(),
-                    on_delivery=lambda e, m: delivery_report(e, m, self.stats)
-                )
-            producer.poll(0)
-            elapsed = time.time() - start
-            await asyncio.sleep(max(0, delay - elapsed))
+            "\n[Kafka] === REZULTATI ===\n"
+            f"  Produce calls: {int(s['prod']):,}\n  ACKed: {int(s['ok']):,}\n"
+            f"  Failed: {int(s['fail'])}\n  Loss: {loss:.2f}%\n"
+            f"  Krit: {int(s['crit'])}\n  Trajanje: {el:.2f}s\n"
+            f"  Throughput: {s['ok']/max(el,1e-3):.1f} msg/s")
