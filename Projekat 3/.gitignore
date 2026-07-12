@@ -1,0 +1,15 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+__pycache__/
+*.pyc
+.env.local
+benchmark/results/*.csv
+benchmark/results/*.log
+.DS_Store
+tmp_pdf_text/
+IOTS2_unpacked/
+services/maas/model_store/*.joblib
+services/maas/model_store/*.json

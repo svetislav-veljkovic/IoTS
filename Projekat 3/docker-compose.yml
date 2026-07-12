@@ -1,0 +1,173 @@
+x-common-env: &common-env
+  BROKER_TYPE: ${BROKER_TYPE:-mqtt}
+  POSTGRES_CONNECTION_STRING: ${POSTGRES_CONNECTION_STRING:-Host=iot-postgres;Port=5432;Database=iot_data;Username=iotuser;Password=iotpassword}
+  MQTT_HOST: ${MQTT_HOST:-iot-mosquitto}
+  MQTT_PORT: ${MQTT_PORT:-1883}
+  MQTT_TOPIC: ${MQTT_TOPIC:-iot/sensors}
+  MQTT_CEP_TOPIC: ${MQTT_CEP_TOPIC:-iot/analytics/events}
+  MQTT_QOS: ${MQTT_QOS:-1}
+  MQTT_CLIENT_ID: ${MQTT_CLIENT_ID:-analytics-svc}
+  MQTT_CLEAN_SESSION: ${MQTT_CLEAN_SESSION:-false}
+  DEVICE_COUNT: ${DEVICE_COUNT:-100}
+  MESSAGES_PER_SECOND: ${MESSAGES_PER_SECOND:-10}
+  SIMULATION_DURATION_SECONDS: ${SIMULATION_DURATION_SECONDS:-60}
+  DATASET_PATH: ${DATASET_PATH:-/app/data/data_set.csv}
+  SIMULATION_MODE: ${SIMULATION_MODE:-normal}
+  BURST_RATE: ${BURST_RATE:-5.0}
+  BURST_DURATION: ${BURST_DURATION:-15}
+  CRITICAL_RATIO: ${CRITICAL_RATIO:-0.05}
+  STORAGE_ENABLED: ${STORAGE_ENABLED:-true}
+  BATCH_SIZE: ${BATCH_SIZE:-500}
+  TUMBLING_WINDOW_SECONDS: ${TUMBLING_WINDOW_SECONDS:-10}
+  TEMPERATURE_ALERT_THRESHOLD: ${TEMPERATURE_ALERT_THRESHOLD:-50.0}
+  MAAS_URL: ${MAAS_URL:-http://maas:8000}
+
+networks:
+  iot-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  mosquitto-data:
+  mosquitto-log:
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: iot-postgres
+    restart: unless-stopped
+    networks: [iot-network]
+    ports: ["5432:5432"]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-iot_data}
+      POSTGRES_USER: ${POSTGRES_USER:-iotuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-iotpassword}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-iotuser} -d ${POSTGRES_DB:-iot_data}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0.18
+    container_name: iot-mosquitto
+    restart: unless-stopped
+    networks: [iot-network]
+    ports: ["1883:1883", "9001:9001"]
+    volumes:
+      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-log:/mosquitto/log
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_pub -h localhost -p 1883 -t __hc -m p -q 0 -i hc 2>/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  ingestion:
+    build: ./services/ingestion
+    container_name: iot-ingestion
+    restart: unless-stopped
+    environment: { <<: *common-env }
+    volumes:
+      - ./data:/app/data:ro
+    depends_on:
+      mosquitto: { condition: service_healthy }
+      postgres:  { condition: service_healthy }
+    networks: [iot-network]
+
+  storage:
+    build: ./services/storage/StorageService
+    container_name: iot-storage
+    restart: unless-stopped
+    environment: { <<: *common-env }
+    depends_on:
+      mosquitto: { condition: service_healthy }
+      postgres:  { condition: service_healthy }
+    networks: [iot-network]
+
+  analytics:
+    build: ./services/analytics/AnalyticsService
+    container_name: iot-analytics
+    restart: unless-stopped
+    environment: { <<: *common-env }
+    depends_on:
+      mosquitto: { condition: service_healthy }
+      postgres:  { condition: service_healthy }
+      maas:      { condition: service_healthy }
+      ekuiper-init: { condition: service_completed_successfully }
+    networks: [iot-network]
+
+  ekuiper:
+    image: lfedge/ekuiper:1.13.4
+    container_name: iot-ekuiper
+    restart: unless-stopped
+    networks: [iot-network]
+    ports: ["9081:9081", "20498:20498"]
+    volumes:
+      - ./infra/ekuiper/mqtt_source.yaml:/kuiper/etc/mqtt_source.yaml:ro
+    depends_on:
+      mosquitto: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9081/streams >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  ekuiper-init:
+    image: curlimages/curl:8.8.0
+    container_name: iot-ekuiper-init
+    restart: "no"
+    environment:
+      MQTT_TOPIC: ${MQTT_TOPIC:-iot/sensors}
+      MQTT_CEP_TOPIC: ${MQTT_CEP_TOPIC:-iot/analytics/events}
+      TEMPERATURE_ALERT_THRESHOLD: ${TEMPERATURE_ALERT_THRESHOLD:-50.0}
+      TUMBLING_WINDOW_SECONDS: ${TUMBLING_WINDOW_SECONDS:-10}
+      EKUIPER_API: http://ekuiper:9081
+    volumes:
+      - ./infra/ekuiper/init/bootstrap.sh:/bootstrap.sh:ro
+    entrypoint: ["/bin/sh", "/bootstrap.sh"]
+    depends_on:
+      ekuiper: { condition: service_healthy }
+      mosquitto: { condition: service_healthy }
+    networks: [iot-network]
+
+  maas:
+    build: ./services/maas
+    container_name: iot-maas
+    restart: unless-stopped
+    environment:
+      MAAS_TRAINING_DATASET: /app/data/data_set.csv
+    volumes:
+      - ./data:/app/data:ro
+    ports: ["8000:8000"]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2).read()\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks: [iot-network]
+
+  dashboard:
+    build: ./services/dashboard
+    container_name: iot-dashboard
+    restart: unless-stopped
+    environment:
+      POSTGRES_CONNECTION_STRING: ${POSTGRES_CONNECTION_STRING:-host=iot-postgres port=5432 dbname=iot_data user=iotuser password=iotpassword}
+      MAAS_URL: http://maas:8000
+    ports: ["8080:8080"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      maas: { condition: service_healthy }
+    networks: [iot-network]
